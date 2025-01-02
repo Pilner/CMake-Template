@@ -76,3 +76,62 @@ cd build
 cmake ..
 cmake --build .
 ```
+
+---
+
+## Rebuilding
+
+To make rebuilding easier, this is a terminal config code that is put inside `.bashrc` or `.zshrc`
+
+```bash
+# CMake Build Functions
+# Function to navigate to build directory and build the project
+cmbuild() {
+	if [ -d "build" ]; then
+		cd build || { echo "Failed to enter build directory."; return 1; }
+		if [ ! -d "CMakeFiles" ]; then
+			cmake ..
+		else
+			echo "There are files in the build/ directory"
+			cd ..
+			return 1;
+		fi
+	fi
+
+	cmake --build .
+}
+
+# Function to completely rebuild the project
+cmrebuild() {
+	# Check if we're already in the build directory
+	if [[ "$(basename "$(pwd)")" == "build" ]]; then
+		echo "You are already in the build directory. Proceeding with rebuild..."
+		cd ..
+		rm -rf build
+		mkdir build
+	else
+		read "confirm?Are you sure you want to delete the build directory and rebuild? [y/N]: "
+		if [[ "$confirm" =~ ^[Yy]$ ]]; then
+			rm -rf build
+			mkdir build || { echo "Failed to create build directory."; return 1; }
+			echo "Build directory recreated."
+		else
+			echo "Rebuild canceled."
+			return 0
+		fi
+	fi
+
+  # Proceed to the build directory (if not already there)
+  cd build || { echo "Failed to enter build directory."; return 1; }
+
+  # Run cmake to configure the project
+  cmake .. || { echo "CMake configuration failed."; return 1; }
+
+  # Build the project
+  cmake --build . || { echo "Build failed."; return 1; }
+
+  echo "Rebuild complete."
+}
+```
+
+This way, you can just type `cmbuild` or `cmrebuild` to quickly build out your project.
